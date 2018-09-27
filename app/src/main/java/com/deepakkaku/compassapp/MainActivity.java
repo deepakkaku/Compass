@@ -8,6 +8,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import java.math.BigDecimal;
+
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     SensorManager sensorManager;
@@ -80,14 +82,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         switch(event.sensor.getType()){
             case Sensor.TYPE_ACCELEROMETER:
-                for(int i =0; i < 3; i++){
+               /* for(int i =0; i < 3; i++){
                     valuesAccelerometer[i] = event.values[i];
-                }
+                }*/
+               valuesAccelerometer = lowPass(event.values.clone(), valuesAccelerometer);
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
-                for(int i =0; i < 3; i++){
+                /*for(int i =0; i < 3; i++){
                     valuesMagneticField[i] = event.values[i];
-                }
+                }*/
+                valuesMagneticField = lowPass(event.values.clone(), valuesMagneticField);
                 break;
         }
 
@@ -107,9 +111,24 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             readingAzimuth.setText("Azimuth: " + String.valueOf(azimuth));
             readingPitch.setText("Pitch: " + String.valueOf(pitch));
             readingRoll.setText("Roll: " + String.valueOf(roll));
-
-            myCompass.update(matrixValues[0]);
+            myCompass.update(round(matrixValues[0],2));
         }
 
+    }
+    static final float ALPHA = 0.25f;
+
+    protected float[] lowPass( float[] input, float[] output ) {
+        if ( output == null ) return input;
+
+        for ( int i=0; i<input.length; i++ ) {
+            output[i] = output[i] + ALPHA * (input[i] - output[i]);
+        }
+        return output;
+    }
+
+    public static float round(float d, int decimalPlace) {
+        BigDecimal bd = new BigDecimal(Float.toString(d));
+        bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
+        return bd.floatValue();
     }
 }
